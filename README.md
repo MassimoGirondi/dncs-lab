@@ -121,24 +121,30 @@ All the other links can be configured as untagged (or with an arbitrary VLAN tag
 
 
 
-|  Host    | Interface | IP       | VLAN Tag |          Notes                        |
-|:--------:|:---------:|:--------:|:--------:|:-------------------------------------:|
-|`router-1`| eth1      | --       |  --      | Splitted on subinterfaces (trunk link)|
-|          | eth1.10   | 10.0.0.1 |    10    | Default Gateway for network A         |
-|          | eth1.20   | 10.0.1.1 |    20    | Default Gateway for network B         |
-|          | eth2      | 10.0.1.37| Untagged | Link to `router-2`                    |
-|`router-2`| eth2      | 10.0.1.38| Untagged | Link to `router-1`                    |
-|          | eth1      | 10.0.1.33| Untagged | Link to `host-2-c`                    |
-|`host-2-c`| eth1      | 10.0.1.34| Untagged | Link to `router-2`                    |
-|`host-1-a`| eth1      | 10.0.0.2 | Untagged | Access port on the switch VLAN 10     |
-|`host-1-b`| eth1      | 10.0.1.2 | Untagged | Access port on the switch VLAN 20     |
+|  Host    | Interface   | IP       | VLAN Tag |          Notes                        |
+|:--------:|:-----------:|:--------:|:--------:|:-------------------------------------:|
+|`router-1`| `eth1`      | --       |  --      | Splitted on subinterfaces (trunk link)|
+|          | `eth1.10`   | 10.0.0.1 |    10    | Default Gateway for network A         |
+|          | `eth1.20`   | 10.0.1.1 |    20    | Default Gateway for network B         |
+|          | `eth2`      | 10.0.1.37| Untagged | Link to `router-2`                    |
+|`router-2`| `eth2`      | 10.0.1.38| Untagged | Link to `router-1`                    |
+|          | `eth1`      | 10.0.1.33| Untagged | Link to `host-2-c`                    |
+|`host-2-c`| `eth1`      | 10.0.1.34| Untagged | Link to `router-2`                    |
+|`host-1-a`| `eth1`      | 10.0.0.2 | Untagged | Access port on the switch VLAN 10     |
+|`host-1-b`| `eth1`      | 10.0.1.2 | Untagged | Access port on the switch VLAN 20     |
 
 Any other host on network A and B will get the next addresses on their respective networks.
 
+All the `eth0` interfaces are configured by Vagrant (control interfaces).
 
 
+# Vagrant files structure
 
+Every machine uses a file named `machine_name.sh` as configuration script, carrying all the commands to be run at provisioning time. 
 
+The routers and the switch have some commands to be run at boot. These are contained in the files `machine_name_boot.sh`, copied by Vagrant inside the machines. These are then copied into the `/etc/network/if-up.d/` folder, that contains scripts to be executed after a network card is powered up. Thanks to this, if the network service is restarted, the scripts will be executed again, configuring the interfaces.
+
+The machines `host-1-a` and `host-1-b`, instead, requires only a generic script to install some utilities and the configuration of their IPs. The latter is done inside the Vagrant file, while the installation of the utilities is contained in the `common.sh` file.
 
 
 
