@@ -144,7 +144,7 @@ Note that the switch doesn't have any IP assigned to his interfaces: it works at
 
 Every machine uses a file named `machine_name_boot.sh` as configuration script, carrying all the commands to be run at boot time.
 
-Through the `common.sh` script, executed at provisioning time by each machine, the scripts above are copied to `/usr/bin` and add to crontab to be executed at reboot. It's not the best solution (systemd or other methods should be preferred, however, for testing purposes it's fine).
+Through the `common.sh` script, executed at provisioning time by each machine, the scripts above are copied to `/usr/bin` and add to crontab to be executed at reboot. It's not the best solution (systemd or other methods should be preferred); however, for testing purposes it's fine.
 
 
 # Routing
@@ -156,11 +156,12 @@ For this reason, we have to define, at least for one router, some exact rules, s
 
 In the actual configuration, I decided to set `router-1` as the default gateway of `router-2`, whereas for `router-1` I've defined the rule to reach the C subnet (the only one that can't be reached directly from it).
 
-If we want to keep Internet reachability, we can keep the default default-gateway rule on `router-1` (the one set-up by Vagrant DHCP). Or it can be added with
+If we want to keep Internet reachability, we can keep the default default-gateway rule on `router-1` (the one set-up by Vagrant DHCP). Otherwise, it can be added with
 
 ```
 ip route add default via 192.168.100.2
 ```
+Below, I've reported the routing tables of the two routers. An entry regarding the Vagrant management interface has to be expected too, but we can ignore it.
 
 ## `router-1` routing table
 
@@ -169,6 +170,7 @@ ip route add default via 192.168.100.2
 | 10.0.0.1/24    | Direct delivery |
 | 10.0.1.1/27    | Direct delivery |
 | 10.0.1.36/30   | Direct delivery |
+| 10.0.1.32/30   | 10.0.1.38       |
 
 ## `router-2` routing table
 
@@ -182,6 +184,8 @@ ip route add default via 192.168.100.2
 
 
 # How to test
+
+**TL;DR** The script `test.sh` runs almost all the tests needed automatically.
 
 ## Reachability
 
@@ -214,6 +218,33 @@ curl 10.0.1.34
 ```
 If `Just a test page!` is shown in the terminal, the server is working correctly.
 
+## VLAN Separation
+
+To test that the packets of the two VLANs use two different interfaces on the `router-1`, the following command can be used:
+
+```
+sudo tcpdump -nni eth1.10 icmp
+```
+
+Then running `ping 10.0.1.34` from `host-1-a` should show some packets transitating through the interface, whereas running it from `host-1-b` shouldn't show anything.
+
+If the above is true, the switch is correctly splitted between the VLANs and the trunk link is well configured.
+
+To check that the VLAN are separated on the L2 layer, the `arp` command can be used after some of the above commands has been executed.
+
+If the VLANs work correctly, the arp tables, obrained with the `arp` command on the hosts, should show only the host and router. Otherwise, without the VLAN, also the other hosts could be there (e.g. the `host-1-a` in the arp table of `host-1-b`).
+
+Indeed, the arp table contains also the addresses of the Vagrant management interface but, as for the routing tables, we can ignore them.
+
+
+# Routing tables
+
+To check the routers' routing tables, the command below can be run on the routers:
+```
+ip router
+```
+
+The layout is not so user-friendly, the old `route` command can be used instead.
 
 
 # Requirements
@@ -250,3 +281,11 @@ host-2-c                  running (virtualbox)
 ```
 - Once all the VMs are running verify you can log into all of them:
 `vagrant ssh machine-name`
+
+
+
+
+# License
+
+The material in this repository is released under the GNU GPL v3 license.
+This work is based on the material provided in https://github.com/dustnic/dncs-lab, which keep all the rights on that material. See [LICENSE](LICENSE).
