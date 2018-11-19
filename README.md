@@ -50,7 +50,7 @@ This repository contains the Vagrant files required to run the virtual lab envir
 We can split the network into 4 main areas:
 - **A**: The portion containing the `host-1-a`and its siblings (plus a `router-1` IP)
 - **B**: The portion containing the `host-1-b` and its siblings (plus a `router-1` IP)
-- **C**: The portion containing the `host-1-c` (plus a `router-2` IP). We can consider this area as the servers area.
+- **C**: The portion containing the `host-1-c` (plus a `router-2` IP).
 - **D**: The link between the two routers.
 
 Several approaches are possible to assign the IPs:
@@ -62,12 +62,12 @@ To achieve the smallest loss of IP addresses we can use subnetting (and supernet
 - **C**: 1 host + 1 router = 2 addresses -> We need just a /30 network: 2 IPs (and the 2 for network and broadcast addresses)
 - **D**: 2 hosts (the routers) -> As above, a /30 network is fine.
 
-However, splitting the network this way can be a little tricky when dealing with routing paths: we have to define very carefully the routing rules to get the correct behaviour.
+However, splitting the network this way can be a little tricky when dealing with routing paths: we have to define very carefully the routing rules to get the correct behavior.
 
 If we calculate the ratio between the available IPs and all the IPs allocated we find that is pretty low: 132/136 + 26/32 + 2/4 + 2/4 = 70%.
 If we compute the ratio of the total IPs used and all the ones available, we find that it's the best: 131/132 + 26/26 + 2/2 + 2/2 = 100%.
 
-Another problem about this solution will come up when new hosts are connected to the network and new IPs need to be reserved: the network masks will need to be changed to accommodate these new hosts (even for only one). Similarly, also the routing rules need to be modified.
+Another problem about this solution will come up when new hosts are connected to the network and new IPs need to be reserved: the network masks will need to be changed to accommodate these new hosts (even for only one). Similarly, the routing rules need to be modified.
 
 
 ## Smallest big-enough subnets
@@ -86,18 +86,16 @@ So, after this brief discussion, I choose the second option, the simplest and th
 
 | Network |     Network Mask      | # needed IPs | # available IPs | Network address | First IP  | Last IP    |
 |:-------:|:---------------------:|:------------:|:---------------:|:---------------:|:---------:|:----------:|
-|    **A**    |	/24 - 255.255.255.0   |      131     |       254       |    10.0.0.0     | 10.0.0.1  | 10.0.0.254 |
-|    **B**    | /27 - 255.255.255.224 |      26      |       30        |    10.0.1.0     | 10.0.1.1  | 10.0.1.30  |
-|    **C**    | /30 - 255.255.255.252 |      2       |       2         |    10.0.1.32    | 10.0.1.33 | 10.0.1.34  |
-|    **D**    | /30 - 255.255.255.252 |      2       |       2         |    10.0.1.36    | 10.0.1.37 | 10.0.1.38  |
+|   **A** |	/24 - 255.255.255.0   |      131     |       254       |    10.0.0.0     | 10.0.0.1  | 10.0.0.254 |
+|   **B** | /27 - 255.255.255.224 |      26      |       30        |    10.0.1.0     | 10.0.1.1  | 10.0.1.30  |
+|   **C** | /30 - 255.255.255.252 |      2       |       2         |    10.0.1.32    | 10.0.1.33 | 10.0.1.34  |
+|   **D** | /30 - 255.255.255.252 |      2       |       2         |    10.0.1.36    | 10.0.1.37 | 10.0.1.38  |
 
 
 When choosing the networks addresses, any valid class can be taken, there is no "hard" rule. However, the first classes of each block is usually chosen, leaving space for other networks.
-When there is no requirement about the addresses to be used, we can use private IPs, that avoid to buy public addresses. In this case, I chose the 10.0.0.0/8 class, but the 172.16.0.0/12 or the 192.168.0.0/16 can be chosen as well.
+Since there is no requirement about the addresses to be used, we can use private IPs. In this case, I chose networks in the 10.0.0.0/8 class, but the 172.16.0.0/12 or the 192.168.0.0/16 can be chosen as well.
 
-The chosen IP classes above are one after the other, allowing an easy configuration of any other ruoter outside the network: the longest-prefix trick can be used to route them (if there are no other 10.0.1.0 IPs to be routed, the 10.0.1.0/23 route will match all of these addresses).
-
-This is not a very nice approach when we plan to have upgrades in future: could be better to separate the networks a little more (e.g. put the network B on 10.1.0.0/26), so we can easily expand the networks without changing the addresses of the host already configured. However, this is not required by this assignment and we can keep them adjacent.
+The chosen IP classes above are one after the other, this is not a very nice approach when we plan to have upgrades in future: could be better to separate the networks a little more (e.g. put the network B on 10.1.0.0/26), so we can easily expand the networks without changing the addresses of the host already configured. However, this is not required by this assignment and we can keep them adjacent.
 
 By common practice, the routers (default gateways) will have the first IP of each subnet.
 
@@ -106,7 +104,7 @@ By common practice, the routers (default gateways) will have the first IP of eac
 Even if it's not required, is better to map the IP subnets on different VLAN for the portion of network where we have networks **A** and **B**. The VLAN will follow the 802.1Q standard.
 To connect the `router-1` to both LANs we can use either two different links on two access ports or a trunk link. I've chose the latter.
 
-All the host in network **A** and **B** use access ports on the `switch`: the **B**'s host will never know to be on the same physical switch of network **A**'s hosts.
+All the host in network **A** and **B** use access ports on the `switch`: the **B**'s host will never know to be on the same physical switch of network **A**'s hosts and viceversa.
 
 All the other links can be configured as untagged (or with an arbitrary VLAN tag, even if there is no need, at the moment, to do it).
 
@@ -114,11 +112,10 @@ All the other links can be configured as untagged (or with an arbitrary VLAN tag
 
 | Network | VLAN ID |Network address|
 |:-------:|:-------:|:-------------:|
-|    **A**|   10    |  10.0.0.0/24  |
-|    **B**|   20    |  10.0.1.0/27  |
-|    **C**| No VLAN |  10.0.1.32/30 |
-|    **D**| No VLAN |  10.0.1.36/30 |
-
+|   **A** |   10    |  10.0.0.0/24  |
+|   **B** |   20    |  10.0.1.0/27  |
+|   **C** | No VLAN |  10.0.1.32/30 |
+|   **D** | No VLAN |  10.0.1.36/30 |
 
 
 |  Host    | Interface   | IP       | VLAN Tag |          Notes                        |
@@ -129,15 +126,15 @@ All the other links can be configured as untagged (or with an arbitrary VLAN tag
 |          | `eth2`      | 10.0.1.37| Untagged | Link to `router-2`                    |
 |`router-2`| `eth2`      | 10.0.1.38| Untagged | Link to `router-1`                    |
 |          | `eth1`      | 10.0.1.33| Untagged | Link to `host-2-c`                    |
-|`host-1-a`| `eth1`      | 10.0.0.2 | Untagged | Access port on the switch VLAN 10     |
-|`host-1-b`| `eth1`      | 10.0.1.2 | Untagged | Access port on the switch VLAN 20     |
+|`host-1-a`| `eth1`      | 10.0.0.2 | Untagged | Access port on the switch, VLAN 10    |
+|`host-1-b`| `eth1`      | 10.0.1.2 | Untagged | Access port on the switch, VLAN 20    |
 |`host-2-c`| `eth1`      | 10.0.1.34| Untagged | Link to `router-2`                    |
 
 Any other host on network **A** and **B** will get the next addresses on their respective networks.
 
 All the `eth0` interfaces are configured by Vagrant (control interfaces) on the subnet `192.168.100.0/24`. I needed to change this to avoid routing problems: by default it's `10.0.0.0/8`.
 
-Note that the switch doesn't have any IP assigned to his interfaces: it works at level 2 and doesn't need them.
+Note that the switch doesn't have any IP assigned to his interfaces (except for `eth0`): it works at level 2 and doesn't need them.
 
 
 # Vagrant files structure
@@ -146,23 +143,16 @@ Every machine uses a file named `machine_name_boot.sh` as configuration script, 
 
 Through the `common.sh` script, executed at provisioning time by each machine, the scripts above are copied to `/usr/bin` and add to crontab to be executed at reboot. It's not the best solution (systemd or other methods should be preferred); however, for testing purposes it's fine.
 
+In the case of the routers, some other files are copied to configure the dynamic routing.
+
 
 # Routing
-Several ways can be used to define the routing tables.
-An easy way can be to define a default route for both routers, sending all the traffic for the subnets not connected to the router to the other.
-However, if there is a packet for an IP outside the network, this will create a loop between the routers, that will continue to send the packets from one to the other.
+Several ways can be used to define the routing tables. Static routing can be a easy and fast solution, however, for the purposes of the exercise and give more flexibility to the netowk, I decided to implement dynamic routing through OSPF. This is done with Quagga, a daemon that provides several routing protocols.
 
-For this reason, we have to define, at least for one router, some exact rules, so it can answer with `No route to host` when trying to reach a host outside our subnets. Of course, other approaches like dinamic routing are possible.
+The configuration is the simplest possibile in both routers: they announce to each other the networks that they can reach. These configurations are contained in the files `router-1.ospfd.conf` and `router-2.ospf.conf`.
 
-In the actual configuration, I decided to set `router-1` as the default gateway of `router-2`, whereas for `router-1` I've defined the rule to reach the C subnet (the only one that can't be reached directly from it).
 
-If we want to keep Internet reachability, we can keep the default default-gateway rule on `router-1` (the one set-up by Vagrant DHCP). Otherwise, it can be added with
-
-```
-ip route add default via 192.168.100.2
-```
-Below, I've reported the routing tables of the two routers. An entry regarding the Vagrant management interface has to be expected too, but we can ignore it.
-
+Below, there is a recap of the routing tables of the two routers, as it shoud be after the OSPF protocol has done its work.
 ## `router-1` routing table
 
 | Destination    | Next-Hop        |
@@ -178,12 +168,20 @@ Below, I've reported the routing tables of the two routers. An entry regarding t
 | :------------: | :-------------: |
 | 10.0.1.32/30   | Direct delivery |
 | 10.0.1.36/30   | Direct delivery |
-| 0.0.0.0/0      | 10.0.1.37       |
+| 10.0.0.0/24    | 10.0.1.37       |
+| 10.0.1.0/27    | 10.0.1.37       |
 
+Other routes can be found in them, like the ones that announce the Vagrant management network. These can be ignored.
 
+This configuration does not provide Internet access, which can be granted configuring a specific route on one of the two routers or on all hosts (even if this break the default gateway concept).
+
+A static routing configuration is provided in the [`static-routing` branch](https://github.com/MassimoGirondi/dncs-lab/tree/dynamic_routing).
 
 
 # How to test
+
+Just a side note: due to dynamic routing, the hosts may not see each other just right after the boot: wait few minutes to allow the OSPF protocol to discover the routes and everything will work.
+
 
 **TL;DR** The script `test.sh` runs almost all the tests needed automatically.
 
@@ -191,16 +189,16 @@ Below, I've reported the routing tables of the two routers. An entry regarding t
 
 To test the reachability between the networks, the following commands can be used:
 
-|Host             |  Command         | Action                                                                         | Expected behaviour                     |
-| :-------------: | :-------------:  | :----------------------------------------------------------------------------: |  :---------------------------------:   |
-| `host-1-a`      | `ping 10.0.1.1`  | Ping the `host-1-b` machine from `host-1-a`, test `router-1` routing           | Get the RTT time between the two hosts |
-| `host-1-a`      | `ping 10.0.1.34` | Ping the `host-2-c` machine from `host-1-a`, test `router-1` and `router-2`    | Get the RTT time between the two hosts |
-| `host-2-c`      | `ping 10.0.0.1`  | Ping the `host-1-a` machine from `host-2-c`, test `router-1` and `router-2`    | Get the RTT time between the two hosts |
-| `host-1-b`      | `traceroute 10.0.0.1`  | Get the path between `host-1-b` and `host-1-a`                           | Get the hops between the hosts: `10.0.1.1` and  `10.0.0.2` |
-| `host-1-a`      | `traceroute 10.0.1.34`  | Get the path between `host-1-a` and `host-2-c`   | Get the hops between the hosts: `10.0.0.1`, `10.0.1.38` and `10.0.1.34`|
+|Host             |  Command                | Action                                                                         | Expected behavior                                                        |
+| :-------------: | :----------------------:| :----------------------------------------------------------------------------: |  :---------------------------------:                                     |
+| `host-1-a`      | `ping 10.0.1.1`         | Ping the `host-1-b` machine from `host-1-a`, test `router-1` routing           | Get the RTT time between the two hosts                                   |
+| `host-1-a`      | `ping 10.0.1.34`        | Ping the `host-2-c` machine from `host-1-a`, test `router-1` and `router-2`    | Get the RTT time between the two hosts                                   |
+| `host-2-c`      | `ping 10.0.0.1`         | Ping the `host-1-a` machine from `host-2-c`, test `router-1` and `router-2`    | Get the RTT time between the two hosts                                   |
+| `host-1-b`      | `traceroute 10.0.0.1`   | Get the path between `host-1-b` and `host-1-a`                                 | Get the hops between the hosts: `10.0.1.1` and  `10.0.0.2`               |
+| `host-1-a`      | `traceroute 10.0.1.34`  | Get the path between `host-1-a` and `host-2-c`                                 | Get the hops between the hosts: `10.0.0.1`, `10.0.1.38` and `10.0.1.34`  |
 
 ## Router functionalities
-To check if the `router-1` is relly doing its work between the network **A** and **B**, the following command can be used:
+To check if the `router-1` is really doing its work between the networks **A** and **B**, the following command can be used:
 ```
 sudo tcpdump -nni any icmp
 ```
@@ -209,7 +207,7 @@ When running one of the command above from any host, should provide the trace of
 The same can be done on `router-2`. Obviously, the `host-2-c` need to be one of the peers of the command in this case.
 
 ## Web server
-To test if the  web server on `host-2-c` is working, we just need to download the (sample) index page.
+To test if the web server on `host-2-c` is working, we just need to download the (sample) index page.
 
 From any host, the following command can be used:
 
@@ -217,6 +215,29 @@ From any host, the following command can be used:
 curl 10.0.1.34
 ```
 If `Just a test page!` is shown in the terminal, the server is working correctly.
+
+## Switch
+
+To check the configuration of the switch is correct, you can use the command `sudo ovs-vsctl show` on it. The screen below should appear:
+
+```
+Bridge switch
+    Port "eth1"
+        Interface "eth1"
+    Port switch
+        Interface switch
+            type: internal
+    Port "eth2"
+        tag: 10
+        Interface "eth2"
+    Port "eth3"
+        tag: 20
+        Interface "eth3"
+ovs_version: "2.0.2"
+
+```
+
+It correctly shows that the `eth2` and  `eth3` ports are access ports (the traffic is tagged) whereas the `eth1` is a trunk port.
 
 ## VLAN Separation
 
@@ -226,25 +247,29 @@ To test that the packets of the two VLANs use two different interfaces on the `r
 sudo tcpdump -nni eth1.10 icmp
 ```
 
-Then running `ping 10.0.1.34` from `host-1-a` should show some packets transitating through the interface, whereas running it from `host-1-b` shouldn't show anything.
+When running `ping 10.0.1.34` from `host-1-a` should show some packets traveling through the interface, whereas running the same command from `host-1-b` shouldn't show anything.
 
-If the above is true, the switch is correctly splitted between the VLANs and the trunk link is well configured.
+If the above is true, the switch is correctly split between the VLANs and the trunk link is well configured.
 
 To check that the VLAN are separated on the L2 layer, the `arp` command can be used after some of the above commands has been executed.
 
 If the VLANs work correctly, the arp tables, obrained with the `arp` command on the hosts, should show only the host and router. Otherwise, without the VLAN, also the other hosts could be there (e.g. the `host-1-a` in the arp table of `host-1-b`).
 
-Indeed, the arp table contains also the addresses of the Vagrant management interface but, as for the routing tables, we can ignore them.
+The arp table contains also the addresses of the Vagrant management interfaces but, as for the routing tables, we can ignore them.
 
 
-# Routing tables
+## Routing tables
 
-To check the routers' routing tables, the command below can be run on the routers:
+To check the routers' routing tables, the command below can be run on both routers:
 ```
 ip router
 ```
 
 The layout is not so user-friendly, the old `route` command can be used instead.
+
+To check that the routes are set-up by OSPF, the command `vtysh -c "show ip route"` can be used: it shows all the routes of the current machine and their source: for the ones discovered by OSPF a `O` should appear at the beginning of the line.
+
+
 
 
 # Requirements
@@ -286,6 +311,8 @@ host-2-c                  running (virtualbox)
 
 
 # License
+
+The code published in this repository has been developed as an assignment for the course "Design of Network and Communication Systems", held at University of Trento.
 
 The material in this repository is released under the GNU GPL v3 license.
 This work is based on the material provided in https://github.com/dustnic/dncs-lab, which keep all the rights on that material. See [LICENSE](LICENSE).

@@ -26,15 +26,19 @@ Vagrant.configure("2") do |config|
     router1.vm.network "private_network", virtualbox__intnet: "broadcast_router-south-1", auto_config: false
     router1.vm.network "private_network", virtualbox__intnet: "broadcast_router-inter", auto_config: false
     router1.vm.provision "file", source: "router-1_boot.sh", destination: "router-1_boot.sh"
-    router1.vm.provision "shell", path: "common.sh"
-  end
+    router1.vm.provision "file", source: "router-1.ospfd.conf", destination: "router-1.ospfd.conf"
+    router1.vm.provision "shell", path: "router_common.sh"
+    #router1.vm.provision "shell", path: "common.sh"
+    end
   config.vm.define "router-2" do |router2|
     router2.vm.box = "minimal/trusty64"
     router2.vm.hostname = "router-2"
     router2.vm.network "private_network", virtualbox__intnet: "broadcast_router-south-2", auto_config: false
     router2.vm.network "private_network", virtualbox__intnet: "broadcast_router-inter", auto_config: false
     router2.vm.provision "file", source: "router-2_boot.sh", destination: "router-2_boot.sh"
-    router2.vm.provision "shell", path: "common.sh"
+    #router2.vm.provision "shell", path: "common.sh"
+    router2.vm.provision "file", source: "router-2.ospfd.conf", destination: "router-2.ospfd.conf"
+    router2.vm.provision "shell", path: "router_common.sh"
     end
   config.vm.define "switch" do |switch|
     switch.vm.box = "minimal/trusty64"

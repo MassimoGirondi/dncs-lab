@@ -16,9 +16,5 @@ ip addr add 10.0.0.1/24 dev eth1.10
 ip addr add 10.0.1.1/27 dev eth1.20
 ip addr add 10.0.1.37/30 dev eth2
 
-#Routing rules
+#Delete default route (by Vagrant DHCP)
 ip route del default
-ip route add 10.0.1.32/30 via 10.0.1.38
-
-# Uncomment to allow internet access
-# ip route add default via 192.168.100.2

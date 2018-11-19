@@ -11,7 +11,6 @@ ip addr add 10.0.1.33/30 dev eth1
 ip addr add 10.0.1.38/30 dev eth2
 
 
-#Easy way: forward everything to the other router
 
+#Delete default route (by Vagrant DHCP)
 ip route del default
-ip route add default via 10.0.1.37
