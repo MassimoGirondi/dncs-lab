@@ -12,8 +12,8 @@ FILE=`ls *_boot.sh`
 chmod +x $FILE
 mv $FILE /usr/bin/$FILE
 
-# Add to crontab if not exists (avoid multiple entries)
-grep '/usr/bin/$FILE' /etc/crontab && echo -e "@reboot\troot\t/usr/bin/$FILE" >> /etc/crontab
+# Add to crontab 
+echo -e "@reboot\troot\t/usr/bin/$FILE" >> /etc/crontab
 
 # Execute now
 echo "****************************************************"
