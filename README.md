@@ -1,6 +1,8 @@
 # DNCS-LAB
 
 This repository contains the Vagrant files required to run the virtual lab environment used in the DNCS course.
+Below there is a map of the network, with all the IP addresses specified.
+
 ```
 
 
@@ -11,22 +13,22 @@ This repository contains the Vagrant files required to run the virtual lab envir
         |     |                |            |             |            |
         |     |            eth0|            |eth2     eth2|            |
         |     +----------------+  router-1  +-------------+  router-2  |
-        |     |                |            |             |            |
-        |     |                |            |             |            |
+        |     |                |            |.37       .38|            |
+        |     |                |            |10.0.1.36/30 |            |
         |  M  |                +------------+             +------------+
-        |  A  |                      |eth1                       |eth1
-        |  N  |                      |                           |
-        |  A  |                      |                           |eth1
+        |  A  |        10.0.0.1/24   |eth1.10                 .33|eth1
+        |  N  |        10.0.1.1/27   |eth1.20        10.0.1.32/30|
+        |  A  |                      |                        .34|eth1
         |  G  |                      |                     +-----+----+
         |  E  |                      |eth1                 |          |
         |  M  |            +-------------------+           |          |
-        |  E  |        eth0|                   |           | host-2-c |
+        |  E  |        eth0|       TRUNK       |           | host-2-c |
         |  N  +------------+      SWITCH       |           |          |
-        |  T  |            |                   |           |          |
+        |  T  |            |  10           20  |           |          |
         |     |            +-------------------+           +----------+
         |  V  |               |eth2         |eth3                |eth0
         |  A  |               |             |                    |
-        |  G  |               |             |                    |
+        |  G  |               |10.0.0.2/24  |10.0.1.2/27         |
         |  R  |               |eth1         |eth1                |
         |  A  |        +----------+     +----------+             |
         |  N  |        |          |     |          |             |
@@ -56,22 +58,22 @@ We can split the network into 4 main areas:
 Several approaches are possible to assign the IPs:
 
 ##  Exact subnets tailoring
-To achieve the smallest loss of IP addresses we can use subnetting (and supernetting) to allocate only the IPs that we need. In this case:
-- **A**: 130 hosts + 1 router = 131 addresses -> We can use a /25 and a /29 subnets to obtain 132 IPs (with other 4 IP lost for network and broadcast addresses)
-- **B**: 25 hosts + 1 router = 26 addresses -> We can use a /28 and two /29 subnets to obtain 26 IPs (with other 6 IP lost for network and broadcast addresses)
-- **C**: 1 host + 1 router = 2 addresses -> We need just a /30 network: 2 IPs (and the 2 for network and broadcast addresses)
+To achieve the smallest loss of IP addresses we can use subnetting (and supernetting) to allocate only the IP  addresses that we need. In this case:
+- **A**: 130 hosts + 1 router = 131 addresses -> We can use a /25 and a /29 subnets to obtain 132 IP addresses (with other 4 IP  addresses lost for network and broadcast addresses)
+- **B**: 25 hosts + 1 router = 26 addresses -> We can use a /28 and two /29 subnets to obtain 26 IP addresses (with other 6 IP addresses lost for network and broadcast addresses)
+- **C**: 1 host + 1 router = 2 addresses -> We need just a /30 network: 2 IPs (and the 2  addresses for network and broadcast addresses)
 - **D**: 2 hosts (the routers) -> As above, a /30 network is fine.
 
 However, splitting the network this way can be a little tricky when dealing with routing paths: we have to define very carefully the routing rules to get the correct behavior.
 
-If we calculate the ratio between the available IPs and all the IPs allocated we find that is pretty low: 132/136 + 26/32 + 2/4 + 2/4 = 70%.
-If we compute the ratio of the total IPs used and all the ones available, we find that it's the best: 131/132 + 26/26 + 2/2 + 2/2 = 100%.
+If we calculate the ratio between the available IP  addresses and all the IP addresses allocated we find that is pretty low: 132/136 + 26/32 + 2/4 + 2/4 = 70%.
+If we compute the ratio of the total IP addresses used and all the ones available, we find that it's the best: 131/132 + 26/26 + 2/2 + 2/2 = 100%.
 
-Another problem about this solution will come up when new hosts are connected to the network and new IPs need to be reserved: the network masks will need to be changed to accommodate these new hosts (even for only one). Similarly, the routing rules need to be modified.
+Another problem about this solution will come up when new hosts are connected to the network and new IP addresses need to be reserved: the network masks will need to be changed to accommodate these new hosts (even for only one). Similarly, the routing rules need to be modified.
 
 
 ## Smallest big-enough subnets
-The simplest approach to get the smallest loss of IPs is to choose the smallest network classes that can accommodate all the hosts of that portion of the network.
+The simplest approach to get the smallest loss of IP addresses is to choose the smallest network classes that can accommodate all the hosts of that portion of the network.
 - **A**: /24 network provides 254 addresses
 - **B**: /27 network provides 30 addresses
 - **C**: /30 network provides 2 addresses
@@ -93,7 +95,7 @@ So, after this brief discussion, I choose the second option, the simplest and th
 
 
 When choosing the networks addresses, any valid class can be taken, there is no "hard" rule. However, the first classes of each block is usually chosen, leaving space for other networks.
-Since there is no requirement about the addresses to be used, we can use private IPs. In this case, I chose networks in the 10.0.0.0/8 class, but the 172.16.0.0/12 or the 192.168.0.0/16 can be chosen as well.
+Since there is no requirement about the addresses to be used, we can use private IP addresses. In this case, I chose networks in the 10.0.0.0/8 class, but the 172.16.0.0/12 or the 192.168.0.0/16 can be chosen as well.
 
 The chosen IP classes above are one after the other, this is not a very nice approach when we plan to have upgrades in future: could be better to separate the networks a little more (e.g. put the network B on 10.1.0.0/26), so we can easily expand the networks without changing the addresses of the host already configured. However, this is not required by this assignment and we can keep them adjacent.
 
@@ -134,7 +136,7 @@ Any other host on network **A** and **B** will get the next addresses on their r
 
 All the `eth0` interfaces are configured by Vagrant (control interfaces) on the subnet `192.168.100.0/24`. I needed to change this to avoid routing problems: by default it's `10.0.0.0/8`.
 
-Note that the switch doesn't have any IP assigned to his interfaces (except for `eth0`): it works at level 2 and doesn't need them.
+Note that `switch` doesn't have any IP assigned to his interfaces (except for `eth0`): it works at level 2 and doesn't need them.
 
 
 # Vagrant files structure
@@ -177,6 +179,10 @@ This configuration does not provide Internet access, which can be granted config
 
 A static routing configuration is provided in the [`static-routing` branch](https://github.com/MassimoGirondi/dncs-lab/tree/dynamic_routing).
 
+# Web server
+
+To simplify the deployment of the web server running on `host-2-c`, a docker image of `ngnix` has been used.
+The container is run in background and it's available through the port 80 of the host. The default index page has been replaced by a simple text to make the testing easier, even if it's not a valid html file.
 
 # How to test
 
@@ -315,4 +321,4 @@ host-2-c                  running (virtualbox)
 The code published in this repository has been developed as an assignment for the course "Design of Network and Communication Systems", held at University of Trento.
 
 The material in this repository is released under the GNU GPL v3 license.
-This work is based on the material provided in https://github.com/dustnic/dncs-lab, which keep all the rights on that material. See [LICENSE](LICENSE).
+This work is based on the material provided in https://github.com/dustnic/dncs-lab, which keeps all the rights on his material. See [LICENSE](LICENSE).
