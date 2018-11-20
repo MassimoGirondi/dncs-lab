@@ -27,6 +27,7 @@ echo "****************************************************"
 # link local 80 port to container's 80
 # run in detached mode
 docker run --name docker-nginx \
+--restart=always \
 -p 80:80 -d \
 -v /var/www:/usr/share/nginx/html:ro \
 nginx
