@@ -1,6 +1,35 @@
-# DNCS-LAB
+# DNCS-LAB assignment
 
 This repository contains the Vagrant files required to run the virtual lab environment used in the DNCS course.
+
+## Table of contents
+
+- [Netowrk map](#network-map)
+- [IP subnetting](#ip-subnetting)
+  * [Exact subnets tailoring](#exact-subnets-tailoring)
+  * [Smallest big-enough subnets](#smallest-big-enough-subnets)
+- [IP Addresses](#ip-addresses)
+- [Virtual LANs](#virtual-lans)
+- [IPs addresses and VLAN recap](#ips-addresses-and-vlan-recap)
+- [Vagrant files structure](#vagrant-files-structure)
+- [Routing](#routing)
+  * [`router-1` routing table](#router-1-routing-table)
+  * [`router-2` routing table](#router-2-routing-table)
+- [Web server](#web-server)
+- [How to test](#how-to-test)
+  * [Reachability](#reachability)
+  * [Router functionalities](#router-functionalities)
+  * [Web server](#web-server-1)
+  * [Switch](#switch)
+  * [VLAN Separation](#vlan-separation)
+  * [Routing tables](#routing-tables)
+- [Requirements](#requirements)
+- [How-to install](#how-to-install)
+- [License](#license)
+
+
+
+# Network map
 Below there is a map of the network, with all the IP addresses specified.
 
 ```
@@ -81,10 +110,10 @@ The simplest approach to get the smallest loss of IP addresses is to choose the 
 
 With this configuration, we obtain a available/allocated IP ratio of 73% and a used/available IP ratio of 60%.
 
-Even if it's not optimal (we have a lower utilization), it's the best one when dealing with real networks. Moreover, if we want to add some hosts in network A or B, this can be done as far as we don't saturate the network (123 hosts on A and 4 hosts on B) without changing routing rules or network masks.
+Even if it's not optimal (we have a lower utilization), it's the best one when dealing with real networks. Moreover, if we want to add some hosts in network A or B, this can be done as far as we don't saturate the network (123 more hosts on A and 4 more hosts on B) without changing routing rules or network masks.
 
 # IP Addresses
-So, after this brief discussion, I choose the second option, the simplest and the easiest to build and maintain. We can define the addresses used on the network.
+So, after this brief discussion, I choose the second option, the simplest and the easiest to build and maintain. We can define the addresses used on the networks as below.
 
 | Network |     Network Mask      | # needed IPs | # available IPs | Network address | First IP  | Last IP    |
 |:-------:|:---------------------:|:------------:|:---------------:|:---------------:|:---------:|:----------:|
@@ -95,22 +124,22 @@ So, after this brief discussion, I choose the second option, the simplest and th
 
 
 When choosing the networks addresses, any valid class can be taken, there is no "hard" rule. However, the first classes of each block is usually chosen, leaving space for other networks.
-Since there is no requirement about the addresses to be used, we can use private IP addresses. In this case, I chose networks in the 10.0.0.0/8 class, but the 172.16.0.0/12 or the 192.168.0.0/16 can be chosen as well.
+Since there is no requirement about the addresses to be used, we can use private IP addresses. In this case, I chose networks in the 10.0.0.0/8 class, but the 172.16.0.0/12 or the 192.168.0.0/16 classes can be chosen as well.
 
 The chosen IP classes above are one after the other, this is not a very nice approach when we plan to have upgrades in future: could be better to separate the networks a little more (e.g. put the network B on 10.1.0.0/26), so we can easily expand the networks without changing the addresses of the host already configured. However, this is not required by this assignment and we can keep them adjacent.
 
 By common practice, the routers (default gateways) will have the first IP of each subnet.
 
-# Virtual LAN
+# Virtual LANs
 
-Even if it's not required, is better to map the IP subnets on different VLAN for the portion of network where we have networks **A** and **B**. The VLAN will follow the 802.1Q standard.
+Even if it's not required, is better to map the IP subnets on different VLANs for the portion of network where we have networks **A** and **B**. The VLANs will follow the 802.1Q standard.
 To connect the `router-1` to both LANs we can use either two different links on two access ports or a trunk link. I've chose the latter.
 
 All the host in network **A** and **B** use access ports on the `switch`: the **B**'s host will never know to be on the same physical switch of network **A**'s hosts and viceversa.
 
 All the other links can be configured as untagged (or with an arbitrary VLAN tag, even if there is no need, at the moment, to do it).
 
-# Recap
+# IPs addresses and VLAN recap
 
 | Network | VLAN ID |Network address|
 |:-------:|:-------:|:-------------:|
@@ -149,7 +178,9 @@ In the case of the routers, some other files are copied to configure the dynamic
 
 
 # Routing
-Several ways can be used to define the routing tables. Static routing can be a easy and fast solution, however, for the purposes of the exercise and give more flexibility to the netowk, I decided to implement dynamic routing through OSPF. This is done with Quagga, a daemon that provides several routing protocols.
+Several ways can be used to define the routing tables. Static routing can be a easy and fast solution, however, for the purposes of the exercise and give more flexibility to the network, I decided to implement dynamic routing through OSPF. This is done with Quagga, a daemon that provides several routing protocols.
+
+A static routing configuration is provided in the [`static-routing` branch](https://github.com/MassimoGirondi/dncs-lab/tree/dynamic_routing).
 
 The configuration is the simplest possibile in both routers: they announce to each other the networks that they can reach. These configurations are contained in the files `router-1.ospfd.conf` and `router-2.ospf.conf`.
 
@@ -175,9 +206,7 @@ Below, there is a recap of the routing tables of the two routers, as it shoud be
 
 Other routes can be found in them, like the ones that announce the Vagrant management network. These can be ignored.
 
-This configuration does not provide Internet access, which can be granted configuring a specific route on one of the two routers or on all hosts (even if this break the default gateway concept).
-
-A static routing configuration is provided in the [`static-routing` branch](https://github.com/MassimoGirondi/dncs-lab/tree/dynamic_routing).
+This configuration does not provide Internet access, which can be granted configuring a specific route on one of the two routers.
 
 # Web server
 
@@ -186,10 +215,9 @@ The container is run in background and it's available through the port 80 of the
 
 # How to test
 
-Just a side note: due to dynamic routing, the hosts may not see each other just right after the boot: wait few minutes to allow the OSPF protocol to discover the routes and everything will work.
-
-
 **TL;DR** The script `test.sh` runs almost all the tests needed automatically.
+
+Please note that due to the dynamic routing, the hosts may not see each other immediately after routers boot. Give some minutes to OSPF to complete its job and everything will work.
 
 ## Reachability
 
@@ -277,7 +305,6 @@ To check that the routes are set-up by OSPF, the command `vtysh -c "show ip rout
 
 
 
-
 # Requirements
  - 10GB disk storage
  - 2GB free RAM
@@ -289,18 +316,18 @@ To check that the routes are set-up by OSPF, the command `vtysh -c "show ip rout
  - Install Virtualbox and Vagrant
  - Clone this repository
 `git clone https://github.com/MassimoGirondi/dncs-lab`
- - You should be able to launch the lab from within the cloned repo folder.
+ - You should be able to launch the environment from within the cloned repo folder.
 
 ```
 cd dncs-lab
 [~/dncs-lab] vagrant up
 ```
 Once you launch the vagrant script, it may take a while for the entire topology to become available.
- - Verify the status of the 4 VMs
+ - Verify the status of the 6 VMs
 
 ```
- [dncs-lab]$ vagrant status                                                                                                                                                                
-Current machine states:
+[dncs-lab]$ vagrant status
+machine states:
 
 router-1                  running (virtualbox)
 router-2                  running (virtualbox)
@@ -312,7 +339,10 @@ host-2-c                  running (virtualbox)
 ```
 - Once all the VMs are running verify you can log into all of them:
 `vagrant ssh machine-name`
-
+- To run some automatic tests you can use the `test.sh` script:
+```
+  bash test.sh
+```
 
 
 
